@@ -31,6 +31,12 @@ static uint8_t txd[MAX_DATA_BYTES];
 // *****************************************************************************
 // *****************************************************************************
 // Section: Variables
+byte ext_flg; // identifier xxxID
+// either extended (the 29 LSB) or standard (the 11 LSB)
+unsigned long can_id; // can id
+byte rtr;             // is remote frame
+static byte SPICS;
+static byte mcpMode;     // Current controller mode
 
 //! SPI Transmit buffer
 static uint8_t spiTransmitBuffer[SPI_DEFAULT_BUFFER_LENGTH + 2];

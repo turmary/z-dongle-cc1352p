@@ -1,12 +1,59 @@
 
 
-#ifndef _MCP2518FD_H_
-#define _MCP2518FD_H_
+#ifndef __MCP2518FD_CAN_H__
+#define __MCP2518FD_CAN_H__
+
+#include <stdint.h>
+#include <stdbool.h>
+
+#define CAN_OK              (0)
+#define CAN_FAILINIT        (1)
+#define CAN_FAILTX          (2)
+#define CAN_MSGAVAIL        (3)
+#define CAN_NOMSG           (4)
+#define CAN_CTRLERROR       (5)
+#define CAN_GETTXBFTIMEOUT  (6)
+#define CAN_SENDMSGTIMEOUT  (7)
+#define CAN_FAIL            (0xff)
+
+// clock
+typedef enum {
+    MCP_NO_MHz,
+    /* apply to MCP2515 */
+    MCP_16MHz,
+    MCP_8MHz,
+    /* apply to MCP2518FD */
+    MCP2518FD_40MHz = MCP_16MHz /* To compatible MCP2515 shield */,
+    MCP2518FD_20MHz,
+    MCP2518FD_10MHz,
+} MCP_CLOCK_T;
 
 #include "mcp2518fd_can_dfs.h"
-#include "mcp_can.h"
-#include <Arduino.h>
-#include <SPI.h>
+
+typedef enum {
+    CAN_NOBPS,
+    CAN_5KBPS,
+    CAN_10KBPS,
+    CAN_20KBPS,
+    CAN_25KBPS,
+    CAN_31K25BPS,
+    CAN_33KBPS  ,
+    CAN_40KBPS  ,
+    CAN_50KBPS  ,
+    CAN_80KBPS  ,
+    CAN_83K3BPS ,
+    CAN_95KBPS  ,
+    CAN_100KBPS ,
+    CAN_125KBPS ,
+    CAN_200KBPS ,
+    CAN_250KBPS ,
+    CAN_500KBPS ,
+    CAN_666KBPS ,
+    CAN_800KBPS ,
+    CAN_1000KBPS
+} MCP_BITTIME_SETUP;
+
+typedef uint8_t byte;
 
 // *****************************************************************************
 // *****************************************************************************
