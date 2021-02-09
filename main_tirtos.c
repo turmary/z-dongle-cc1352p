@@ -36,6 +36,7 @@
  */
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 /* POSIX Header files */
 #include <pthread.h>
@@ -47,6 +48,7 @@
 #include <ti/drivers/GPIO.h>
 #include <ti/drivers/gpio/GPIOCC26XX.h>
 #include <ti/display/Display.h>
+#include <ti/drivers/UART2.h>
 
 /* Example/Board Header files */
 #include "ti_drivers_config.h"
@@ -105,7 +107,9 @@ int main(void)
     return (0);
 }
 
+void *RS485_CAN_Init(void *arg0);
 void *CANThread(void *arg0);
+void *RS485Thread(void *arg0);
 
 /*
  *  ======== mainThread ========
@@ -162,6 +166,15 @@ void *mainThread(void *arg0)
         while (1);
     }
 
+    RS485_CAN_Init(NULL);
+
+    pthread_t           thread1;
+    retc = pthread_create(&thread1, &attrs, RS485Thread, NULL);
+    if (retc != 0) {
+        /* pthread_create() failed */
+        while (1);
+    }
+
     CANThread(NULL);
 
     for (;;) {
@@ -178,13 +191,9 @@ uint8_t  type; // bit0: ext, bit1: rtr
 uint8_t  len;
 byte cdata[MAX_DATA_SIZE] = {0};
 
+UART2_Handle uart;
+
 void *CANThread(void *arg0) {
-
-    // Zola_Dongle_v1.0_CC1352P
-    // MCP_begin(CAN_500KBPS, MCP2518FD_20MHz);
-
-    // CANBUS(FD) HAT for Raspberry Pi
-    MCP_begin(CAN_500KBPS, MCP2518FD_40MHz);
 
     for (;;) {
         // check if data coming
@@ -224,5 +233,51 @@ void *CANThread(void *arg0) {
             n += sprintf(prbuf + n, "%02X ", cdata[i]);
         }
         Display_printf(display, 0, 0, prbuf);
+        strcat(prbuf, "\r\n");
+        UART2_write(uart, prbuf, strlen(prbuf) + 1, NULL);
+    }
+}
+
+void *RS485_CAN_Init(void *arg0) {
+    // Zola_Dongle_v1.0_CC1352P
+    // MCP_begin(CAN_500KBPS, MCP2518FD_20MHz);
+
+    // CANBUS(FD) HAT for Raspberry Pi
+    MCP_begin(CAN_500KBPS, MCP2518FD_40MHz);
+
+    UART2_Params uartParams;
+
+    /* Create a UART where the default read and write mode is BLOCKING */
+    UART2_Params_init(&uartParams);
+    uartParams.baudRate = 115200;
+    uartParams.readReturnMode = UART2_ReadReturnMode_PARTIAL;
+
+    uart = UART2_open(CONFIG_UART2_0, &uartParams);
+
+    if (uart == NULL) {
+        /* UART2_open() failed */
+        while (1);
+    }
+    return NULL;
+}
+
+void *RS485Thread(void *arg0) {
+    size_t       bytesRead;
+    uint32_t     status = UART2_STATUS_SUCCESS;
+    uint32_t     canid = 0;
+    byte cdata[MAX_DATA_SIZE] = {0};
+
+    /* Loop forever echoing */
+    while (1) {
+        bytesRead = 0;
+        while (bytesRead == 0) {
+            status = UART2_read(uart, cdata, sizeof cdata, &bytesRead);
+
+            if (status != UART2_STATUS_SUCCESS) {
+                /* UART2_read() failed */
+                while (1);
+            }
+        }
+        MCP_sendMsgBufFull(canid++, 1, 0, bytesRead, cdata);
     }
 }
