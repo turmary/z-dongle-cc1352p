@@ -41,6 +41,7 @@
 
 /* RTOS header files */
 #include <ti/sysbios/BIOS.h>
+#include <ti/display/Display.h>
 
 /* Example/Board Header files */
 #include "ti_drivers_config.h"
@@ -50,6 +51,8 @@ void *mainThread(void *arg0);
 
 /* Stack size in bytes */
 #define THREADSTACKSIZE    2096
+
+Display_Handle display;
 
 /*
  *  ======== main ========
@@ -105,6 +108,18 @@ void *mainThread(void *arg0)
     struct sched_param  priParam;
     int                 retc;
     int                 detachState;
+
+    /* Call driver init functions. */
+    Display_init();
+
+    /* Open the display for output */
+    display = Display_open(Display_Type_UART, NULL);
+    if (display == NULL) {
+        /* Failed to open display driver */
+        while (1);
+    }
+
+    Display_printf(display, 0, 0, "%s(): %s %s\r\n", __func__, __TIME__,  __DATE__);
 
     /* Create application threads */
     pthread_attr_init(&attrs);
