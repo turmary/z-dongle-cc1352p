@@ -137,7 +137,7 @@ PIN_Config pinTable[] =
 
 /***** Function definitions *****/
 
-void *mainThread(void *arg0)
+void *RFThread(void *arg0)
 {
     uint32_t curtime;
     RF_Params rfParams;

@@ -45,7 +45,8 @@
 /* Example/Board Header files */
 #include "ti_drivers_config.h"
 
-extern void *mainThread(void *arg0);
+extern void *RFThread(void *arg0);
+void *mainThread(void *arg0);
 
 /* Stack size in bytes */
 #define THREADSTACKSIZE    2096
@@ -92,4 +93,45 @@ int main(void)
     BIOS_start();
 
     return (0);
+}
+
+/*
+ *  ======== mainThread ========
+ */
+void *mainThread(void *arg0)
+{
+    pthread_t           thread0;
+    pthread_attr_t      attrs;
+    struct sched_param  priParam;
+    int                 retc;
+    int                 detachState;
+
+    /* Create application threads */
+    pthread_attr_init(&attrs);
+
+    detachState = PTHREAD_CREATE_DETACHED;
+    /* Set priority and stack size attributes */
+    retc = pthread_attr_setdetachstate(&attrs, detachState);
+    if (retc != 0) {
+        /* pthread_attr_setdetachstate() failed */
+        while (1);
+    }
+
+    retc |= pthread_attr_setstacksize(&attrs, THREADSTACKSIZE);
+    if (retc != 0) {
+        /* pthread_attr_setstacksize() failed */
+        while (1);
+    }
+
+    /* Create RF thread */
+    priParam.sched_priority = 1;
+    pthread_attr_setschedparam(&attrs, &priParam);
+
+    retc = pthread_create(&thread0, &attrs, RFThread, NULL);
+    if (retc != 0) {
+        /* pthread_create() failed */
+        while (1);
+    }
+
+    return (NULL);
 }
