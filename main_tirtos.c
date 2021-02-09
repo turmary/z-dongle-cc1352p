@@ -35,18 +35,23 @@
  *  ======== main_tirtos.c ========
  */
 #include <stdint.h>
+#include <stdio.h>
 
 /* POSIX Header files */
 #include <pthread.h>
+#include <unistd.h>
 
 /* RTOS header files */
 #include <ti/sysbios/BIOS.h>
+#include <ti/sysbios/knl/Clock.h>
 #include <ti/drivers/GPIO.h>
 #include <ti/drivers/gpio/GPIOCC26XX.h>
 #include <ti/display/Display.h>
 
 /* Example/Board Header files */
 #include "ti_drivers_config.h"
+
+#include "mcp2518fd/mcp2518fd_can.h"
 
 extern void *RFThread(void *arg0);
 void *mainThread(void *arg0);
@@ -99,6 +104,8 @@ int main(void)
 
     return (0);
 }
+
+void *CANThread(void *arg0);
 
 /*
  *  ======== mainThread ========
@@ -155,5 +162,67 @@ void *mainThread(void *arg0)
         while (1);
     }
 
+    CANThread(NULL);
+
+    for (;;) {
+        usleep(1000);
+    }
+
     return (NULL);
+}
+
+#define MAX_DATA_SIZE 8
+
+uint32_t id;
+uint8_t  type; // bit0: ext, bit1: rtr
+uint8_t  len;
+byte cdata[MAX_DATA_SIZE] = {0};
+
+void *CANThread(void *arg0) {
+
+    // Zola_Dongle_v1.0_CC1352P
+    // MCP_begin(CAN_500KBPS, MCP2518FD_20MHz);
+
+    // CANBUS(FD) HAT for Raspberry Pi
+    MCP_begin(CAN_500KBPS, MCP2518FD_40MHz);
+
+    for (;;) {
+        // check if data coming
+        if (CAN_MSGAVAIL != MCP_checkReceive()) {
+            sleep(1);
+            continue;
+        }
+
+        char prbuf[32 + MAX_DATA_SIZE * 3];
+        int i, n;
+
+        unsigned long t = (1UL * Clock_getTicks() * Clock_tickPeriod) / 1000UL;
+        // read data, len: data length, buf: data buf
+        MCP_readMsgBuf(&len, cdata);
+
+        id = MCP_getCanId();
+        type = (MCP_isExtendedFrame() << 0) |
+               (MCP_isRemoteRequest() << 1);
+        /*
+         * MCP2515(or this driver) could not handle properly
+         * the data carried by remote frame
+         */
+
+        n = sprintf(prbuf, "%04lu.%03d ", t / 1000, (int)(t % 1000));
+        /* Displayed type:
+         *
+         * 0x00: standard data frame
+         * 0x02: extended data frame
+         * 0x30: standard remote frame
+         * 0x32: extended remote frame
+         */
+        static const byte type2[] = {0x00, 0x02, 0x30, 0x32};
+        n += sprintf(prbuf + n, "RX: [%08lX](%02X) ", (unsigned long)id, type2[type]);
+        // n += sprintf(prbuf, "RX: [%08lX](%02X) ", id, type);
+
+        for (i = 0; i < len; i++) {
+            n += sprintf(prbuf + n, "%02X ", cdata[i]);
+        }
+        Display_printf(display, 0, 0, prbuf);
+    }
 }
