@@ -41,6 +41,8 @@
 
 /* RTOS header files */
 #include <ti/sysbios/BIOS.h>
+#include <ti/drivers/GPIO.h>
+#include <ti/drivers/gpio/GPIOCC26XX.h>
 #include <ti/display/Display.h>
 
 /* Example/Board Header files */
@@ -111,6 +113,11 @@ void *mainThread(void *arg0)
 
     /* Call driver init functions. */
     Display_init();
+
+    GPIO_init();
+    /* Free PIN for LED-RED & LED-GREEN which used by RF-thread */
+    GPIOCC26xx_release(CONFIG_GPIO_RLED_CONST);
+    GPIOCC26xx_release(CONFIG_GPIO_GLED_CONST);
 
     /* Open the display for output */
     display = Display_open(Display_Type_UART, NULL);
