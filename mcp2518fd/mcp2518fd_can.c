@@ -1,8 +1,15 @@
 /* Most of this code are derived from Microchip MCP2518FD SDK */
 #include "mcp2518fd_can.h"
+
+/* Driver configuration */
+#include "ti_drivers_config.h"
+
 /* Driver Header files */
 #include <ti/drivers/GPIO.h>
+#include <ti/drivers/SPI.h>
+#include <ti/display/Display.h>
 #include <unistd.h>
+#include <ti/sysbios/knl/Swi.h>
 
 static CAN_CONFIG config;
 
@@ -133,7 +140,74 @@ static uint32_t bittime_compat_to_mcp2518fd(uint32_t speedset);
 static int calcBittime(const uint32_t inDesiredArbitrationBitRate,
 	  const uint32_t inTolerancePPM/* = 10000 1% */);
 
+
 // *****************************************************************************
+//! Section: SPI portable interface
+
+// Code anchor for break points
+#define Nop() asm(/* start space is required */ " nop")
+
+// Index to SPI channel
+// Used when multiple MCP25xxFD are connected to the same SPI interface, but
+// with different CS
+#define SPI_DEFAULT_BUFFER_LENGTH 96
+
+#define spi_read()     spi_readwrite(0x00)
+#define spi_write(val) spi_readwrite(val)
+#define SPI_BEGIN()    do { swi_last = Swi_disable(); } while(0)
+#define SPI_END()      do { Swi_restore(swi_last);    } while(0)
+
+/* SPI Chip Select */
+#define MCP2518fd_SELECT()   GPIO_write(SPICS, 0)
+#define MCP2518fd_UNSELECT() GPIO_write(SPICS, 1)
+
+
+SPI_Handle masterSpi;
+UInt swi_last;
+
+extern Display_Handle display;
+
+static int SPI0_begin(int cs) {
+	SPICS = cs;
+	GPIO_setConfig(SPICS, GPIO_CFG_OUTPUT | GPIO_CFG_OUT_HIGH);
+
+	SPI_Params spiParams;
+	/* Open SPI as master (default) */
+	SPI_Params_init(&spiParams);
+	spiParams.frameFormat = SPI_POL0_PHA0;
+	spiParams.bitRate = 4000000;
+	masterSpi = SPI_open(CONFIG_SPI_MASTER, &spiParams);
+	if (masterSpi == NULL) {
+		Display_printf(display, 0, 0, "Error initializing master SPI\n");
+		return -1;
+	} else {
+		Display_printf(display, 0, 0, "Master SPI initialized\n");
+	}
+	return 0;
+}
+
+/* transfer a byte to MOSI, return the byte recevied from MISO */
+static int spi_readwrite(uint8_t val) {
+	SPI_Transaction transaction;
+	uint8_t masterTxBuffer[sizeof(uint32_t)];
+	uint8_t masterRxBuffer[sizeof(uint32_t)];
+
+	transaction.count = 1;
+	transaction.txBuf = (void*)masterTxBuffer;
+	masterTxBuffer[0] = val;
+	transaction.rxBuf = (void*)masterRxBuffer;
+
+	/* Perform SPI transfer */
+	bool transferOK;
+	transferOK = SPI_transfer(masterSpi, &transaction);
+	if (transferOK) {
+		return masterRxBuffer[0];
+	}
+
+	Display_printf(display, 0, 0, "Unsuccessful master SPI transfer");
+	return -1;
+}
+
 // *****************************************************************************
 // Section: Defines
 
@@ -222,8 +296,9 @@ uint16_t DRV_CANFDSPI_CalculateCRC16(uint8_t *data, uint16_t size) {
 ** Descriptions:            init can and set speed
 *********************************************************************************************************/
 byte MCP_begin(uint32_t speedset, const byte clockset) {
-  // TODO
-  // SPI.begin();
+  SPI_init();
+
+  SPI0_begin(CONFIG_SSI0_CS);
 
   /* compatible layer translation */
   speedset = bittime_compat_to_mcp2518fd(speedset);

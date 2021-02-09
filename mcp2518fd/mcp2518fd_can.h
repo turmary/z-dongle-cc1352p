@@ -55,26 +55,6 @@ typedef enum {
 
 typedef uint8_t byte;
 
-// *****************************************************************************
-// *****************************************************************************
-//! Reset DUT
-
-// Code anchor for break points
-#define Nop() asm("nop")
-
-// Index to SPI channel
-// Used when multiple MCP25xxFD are connected to the same SPI interface, but
-// with different CS
-#define SPI_DEFAULT_BUFFER_LENGTH 96
-
-// extern SPIClass* pSPI;
-#define spi_readwrite pSPI->transfer
-#define spi_read() spi_readwrite(0x00)
-#define spi_write(spi_val) spi_readwrite(spi_val)
-#define SPI_BEGIN()                                                            \
-  pSPI->beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0))
-#define SPI_END() pSPI->endTransaction();
-
     extern unsigned long can_id;
     extern uint8_t rtr, ext_flg;
 

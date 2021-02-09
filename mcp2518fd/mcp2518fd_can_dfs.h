@@ -129,14 +129,6 @@ extern "C" {
 #define cRAMADDR_START 0x400
 #define cRAMADDR_END (cRAMADDR_START + cRAM_SIZE)
 
-/* SPI Chip Select */
-#define MCP2518fd_SELECT()                                                     \
-  pinMode(SPICS, OUTPUT);                                                      \
-  digitalWrite(SPICS, LOW)
-#define MCP2518fd_UNSELECT()                                                   \
-  pinMode(SPICS, OUTPUT);                                                      \
-  digitalWrite(SPICS, HIGH)
-
 // *****************************************************************************
 // *****************************************************************************
 /* Register Structures */
