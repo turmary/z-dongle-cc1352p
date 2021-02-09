@@ -21,6 +21,8 @@ const RF       = scripting.addModule("/ti/drivers/RF");
 const RTOS     = scripting.addModule("/ti/drivers/RTOS");
 const SPI      = scripting.addModule("/ti/drivers/SPI");
 const SPI1     = SPI.addInstance();
+const UART2    = scripting.addModule("/ti/drivers/UART2", {}, false);
+const UART21   = UART2.addInstance();
 
 /**
  * Write custom configuration values to the imported modules.
@@ -69,6 +71,13 @@ SPI1.$hardware             = system.deviceData.board.components.LP_SPI;
 SPI1.sclkPinInstance.$name = "CONFIG_PIN_2";
 SPI1.misoPinInstance.$name = "CONFIG_PIN_3";
 SPI1.mosiPinInstance.$name = "CONFIG_PIN_4";
+
+UART21.$name               = "CONFIG_UART2_0";
+UART21.uart.$assign        = "UART1";
+UART21.uart.txPin.$assign  = "boosterpack.9";
+UART21.uart.rxPin.$assign  = "boosterpack.5";
+UART21.txPinInstance.$name = "CONFIG_PIN_6";
+UART21.rxPinInstance.$name = "CONFIG_PIN_7";
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future
