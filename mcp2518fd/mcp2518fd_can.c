@@ -167,7 +167,9 @@ UInt swi_last;
 
 extern Display_Handle display;
 
-static int SPI0_begin(int cs) {
+int SPI0_begin(int cs) {
+	SPI_init();
+
 	SPICS = cs;
 	GPIO_setConfig(SPICS, GPIO_CFG_OUTPUT | GPIO_CFG_OUT_HIGH);
 
@@ -296,10 +298,6 @@ uint16_t DRV_CANFDSPI_CalculateCRC16(uint8_t *data, uint16_t size) {
 ** Descriptions:            init can and set speed
 *********************************************************************************************************/
 byte MCP_begin(uint32_t speedset, const byte clockset) {
-  SPI_init();
-
-  SPI0_begin(CONFIG_SSI0_CS);
-
   /* compatible layer translation */
   speedset = bittime_compat_to_mcp2518fd(speedset);
 

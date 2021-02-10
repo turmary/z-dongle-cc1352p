@@ -238,7 +238,11 @@ void *CANThread(void *arg0) {
     }
 }
 
+extern int SPI0_begin(int cs);
+
 void *RS485_CAN_Init(void *arg0) {
+    SPI0_begin(CONFIG_SSI0_CS);
+
     // Zola_Dongle_v1.0_CC1352P
     // MCP_begin(CAN_500KBPS, MCP2518FD_20MHz);
 
