@@ -185,6 +185,9 @@ void *mainThread(void *arg0)
 }
 
 #define MAX_DATA_SIZE 8
+// To TEST CANFD data transfer, uncomment below lines
+// #undef  MAX_DATA_SIZE
+// #define MAX_DATA_SIZE 64
 
 uint32_t id;
 uint8_t  type; // bit0: ext, bit1: rtr
@@ -198,7 +201,7 @@ void *CANThread(void *arg0) {
     for (;;) {
         // check if data coming
         if (CAN_MSGAVAIL != MCP_checkReceive()) {
-            sleep(1);
+            usleep(10000);
             continue;
         }
 
@@ -243,11 +246,26 @@ extern int SPI0_begin(int cs);
 void *RS485_CAN_Init(void *arg0) {
     SPI0_begin(CONFIG_SSI0_CS);
 
+    #if MAX_DATA_SIZE > 8
+    /*
+     * default mode is CAN_CLASSIC_MODE
+     * Now set to CANFD mode.
+     */
+    MCP_setMode(CAN_NORMAL_MODE);
+
+    /*
+     * CANFD arbitration bitrate = 1M, data bitrate = 1M * 2 = 2M.
+     */
+    MCP_begin(CANFD_BITRATE(1000000UL, 2), MCP2518FD_40MHz);
+
+    #else
+
     // Zola_Dongle_v1.0_CC1352P
     // MCP_begin(CAN_500KBPS, MCP2518FD_20MHz);
 
     // CANBUS(FD) HAT for Raspberry Pi
     MCP_begin(CAN_500KBPS, MCP2518FD_40MHz);
+    #endif
 
     UART2_Params uartParams;
 
@@ -282,6 +300,15 @@ void *RS485Thread(void *arg0) {
                 while (1);
             }
         }
-        MCP_sendMsgBufFull(canid++, 1, 0, bytesRead, cdata);
+
+        #if MAX_DATA_SIZE > 8
+        int i;
+        // pad CANFD extra bytes with 0
+        for (i = bytesRead; i < MAX_DATA_SIZE; i++) {
+            cdata[i] = 0;
+        }
+        #endif
+
+        MCP_sendMsgBufFull(canid++, 1, 0, CANFD_len2dlc(bytesRead), cdata);
     }
 }
