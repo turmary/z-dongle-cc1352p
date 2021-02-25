@@ -126,7 +126,7 @@ void *mainThread(void *arg0)
     Display_init();
 
     GPIO_init();
-    /* Free PIN for LED-RED & LED-GREEN which used by RF-thread */
+    /* Free PIN for LED-RED & LED-GREEN which will be used by RF-thread */
     GPIOCC26xx_release(CONFIG_GPIO_RLED_CONST);
     GPIOCC26xx_release(CONFIG_GPIO_GLED_CONST);
 
@@ -243,6 +243,23 @@ void *CANThread(void *arg0) {
 
 extern int SPI0_begin(int cs);
 
+/*
+ *  ======== RS485_eventCallback ========
+ *  using gpio to control RS485 data direction.
+ */
+static void RS485_eventCallback(UART2_Handle handle, uint32_t event,
+        uint32_t data, void *userArg)
+{
+    unsigned pin = (unsigned)userArg;
+    if (event & UART2_EVENT_TX_BEGIN) {
+        GPIO_write(pin, 1);
+    } else
+    if (event & UART2_EVENT_TX_FINISHED) {
+        GPIO_write(pin, 0);
+    }
+    return;
+}
+
 void *RS485_CAN_Init(void *arg0) {
     SPI0_begin(CONFIG_SSI0_CS);
 
@@ -273,6 +290,12 @@ void *RS485_CAN_Init(void *arg0) {
     UART2_Params_init(&uartParams);
     uartParams.baudRate = 115200;
     uartParams.readReturnMode = UART2_ReadReturnMode_PARTIAL;
+
+    /* RS485 half-duplex direction control */
+    GPIO_setConfig(CONFIG_GPIO_RS485_DE, GPIO_CFG_OUTPUT | GPIO_CFG_OUT_HIGH);
+    uartParams.userArg = (void*)CONFIG_GPIO_RS485_DE;
+    uartParams.eventMask = UART2_EVENT_TX_BEGIN | UART2_EVENT_TX_FINISHED;
+    uartParams.eventCallback = RS485_eventCallback;
 
     uart = UART2_open(CONFIG_UART2_0, &uartParams);
 
