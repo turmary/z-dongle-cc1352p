@@ -17,6 +17,7 @@ const GPIO     = scripting.addModule("/ti/drivers/GPIO");
 const GPIO1    = GPIO.addInstance();
 const GPIO2    = GPIO.addInstance();
 const GPIO3    = GPIO.addInstance();
+const GPIO4    = GPIO.addInstance();
 const RF       = scripting.addModule("/ti/drivers/RF");
 const RTOS     = scripting.addModule("/ti/drivers/RTOS");
 const SPI      = scripting.addModule("/ti/drivers/SPI");
@@ -62,6 +63,12 @@ GPIO3.$name              = "CONFIG_SSI0_CS";
 GPIO3.initialOutputState = "High";
 GPIO3.gpioPin.$assign    = "boosterpack.18";
 GPIO3.pinInstance.$name  = "CONFIG_PIN_5";
+
+GPIO4.$name             = "CONFIG_GPIO_RS485_DE";
+GPIO4.pull              = "Pull Up";
+GPIO4.mode              = "Output";
+GPIO4.gpioPin.$assign   = "boosterpack.2";
+GPIO4.pinInstance.$name = "CONFIG_PIN_8";
 
 RF.$hardware = system.deviceData.board.components["SKY13317-373LF"];
 
