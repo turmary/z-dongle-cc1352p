@@ -278,10 +278,10 @@ void *RS485_CAN_Init(void *arg0) {
     #else
 
     // Zola_Dongle_v1.0_CC1352P
-    // MCP_begin(CAN_500KBPS, MCP2518FD_20MHz);
+    MCP_begin(CAN_500KBPS, MCP2518FD_20MHz);
 
     // CANBUS(FD) HAT for Raspberry Pi
-    MCP_begin(CAN_500KBPS, MCP2518FD_40MHz);
+    // MCP_begin(CAN_500KBPS, MCP2518FD_40MHz);
     #endif
 
     UART2_Params uartParams;
