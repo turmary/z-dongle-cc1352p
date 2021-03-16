@@ -292,7 +292,7 @@ void *RS485_CAN_Init(void *arg0) {
     uartParams.readReturnMode = UART2_ReadReturnMode_PARTIAL;
 
     /* RS485 half-duplex direction control */
-    GPIO_setConfig(CONFIG_GPIO_RS485_DE, GPIO_CFG_OUTPUT | GPIO_CFG_OUT_HIGH);
+    GPIO_setConfig(CONFIG_GPIO_RS485_DE, GPIO_CFG_OUTPUT | GPIO_CFG_OUT_LOW);
     uartParams.userArg = (void*)CONFIG_GPIO_RS485_DE;
     uartParams.eventMask = UART2_EVENT_TX_BEGIN | UART2_EVENT_TX_FINISHED;
     uartParams.eventCallback = RS485_eventCallback;
