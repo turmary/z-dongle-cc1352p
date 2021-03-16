@@ -220,7 +220,7 @@ void *CANThread(void *arg0) {
          * the data carried by remote frame
          */
 
-        n = sprintf(prbuf, "%04lu.%03d ", t / 1000, (int)(t % 1000));
+        n = sprintf(prbuf, "CA%04lu.%03d ", t / 1000, (int)(t % 1000));
         /* Displayed type:
          *
          * 0x00: standard data frame
@@ -324,8 +324,8 @@ void *RS485Thread(void *arg0) {
             }
         }
 
-        #if MAX_DATA_SIZE > 8
         int i;
+        #if MAX_DATA_SIZE > 8
         // pad CANFD extra bytes with 0
         for (i = bytesRead; i < MAX_DATA_SIZE; i++) {
             cdata[i] = 0;
@@ -333,5 +333,15 @@ void *RS485Thread(void *arg0) {
         #endif
 
         MCP_sendMsgBufFull(canid++, 1, 0, CANFD_len2dlc(bytesRead), cdata);
+
+        char prbuf[32 + 32 * 3];
+        int n = bytesRead;
+
+        unsigned long t = (1UL * Clock_getTicks() * Clock_tickPeriod) / 1000UL;
+        n = sprintf(prbuf, "RS%04lu.%03d ", t / 1000, (int)(t % 1000));
+        for (i = 0; i < bytesRead; i++) {
+            n += sprintf(prbuf + n, "%02X ", cdata[i]);
+        }
+        Display_printf(display, 0, 0, prbuf);
     }
 }
