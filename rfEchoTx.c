@@ -49,6 +49,8 @@
 #include "RFQueue.h"
 #include <ti_radio_config.h>
 
+extern volatile int rf_rx_complete;
+
 /***** Defines *****/
 /* Packet TX/RX Configuration */
 #define PAYLOAD_LENGTH      30
@@ -329,6 +331,8 @@ static void echoCallback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e)
             PIN_setOutputValue(ledPinHandle, CONFIG_PIN_GLED,
                                !PIN_getOutputValue(CONFIG_PIN_GLED));
             PIN_setOutputValue(ledPinHandle, CONFIG_PIN_RLED, 0);
+
+            rf_rx_complete = true;
         }
         else
         {

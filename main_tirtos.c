@@ -111,6 +111,8 @@ void *RS485_CAN_Init(void *arg0);
 void *CANThread(void *arg0);
 void *RS485Thread(void *arg0);
 
+volatile int rf_rx_complete;
+
 /*
  *  ======== mainThread ========
  */
@@ -199,6 +201,11 @@ UART2_Handle uart;
 void *CANThread(void *arg0) {
 
     for (;;) {
+        if (rf_rx_complete) {
+            rf_rx_complete = false;
+            Display_printf(display, 0, 0, "#");
+        }
+
         // check if data coming
         if (CAN_MSGAVAIL != MCP_checkReceive()) {
             usleep(10000);
