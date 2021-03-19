@@ -104,7 +104,7 @@
 				</configuration>
 			</storageModule>
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings">
-				<externalSettings containerId="tirtos_builds_cc13x2_cc26x2_release_ccs;com.ti.ccstudio.buildDefinitions.TMS470.Debug.471096633" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
+				<externalSettings containerId="tirtos_builds_cc13x2_cc26x2_release_ccs;Debug" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
 			</storageModule>
 		</cconfiguration>
 	</storageModule>
